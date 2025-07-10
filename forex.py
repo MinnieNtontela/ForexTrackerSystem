@@ -1,5 +1,7 @@
 from datetime import datetime
 import pandas as pd
+import requests
+import numpy as np
 
 def get_forex_data(self, from_currency="EUR", to_currency="USD", interval="5min"):#Fetch real-time forex data
         params = {
@@ -29,13 +31,29 @@ def get_forex_data(self, from_currency="EUR", to_currency="USD", interval="5min"
             print(f"API Error: {e}")
             return self.generate_sample_data()
         
-def generate_sample_data(self):#sample data for testing
-    sample_data = {
-        '2023-10-01 00:00:00': {'open': 1.1, 'high': 1.2, 'low': 1.0, 'close': 1.15},
-        '2023-10-01 01:00:00': {'open': 1.15, 'high': 1.25, 'low': 1.05, 'close': 1.2},
-        '2023-10-01 02:00:00': {'open': 1.2, 'high': 1.3, 'low': 1.15, 'close': 1.25},
-    }
-    df = pd.DataFrame(sample_data).T
-    df.index = pd.to_datetime(df.index)
-    return df.sort_index()
+def generate_sample_data(self):
+    # Generate sample data for EUR/USD with realistic price movements
+    dates = pd.date_range(start=datetime.now() - timedelta(days=5), 
+                         end=datetime.now(), freq='5T')
     
+    # Simulate realistic EUR/USD price movement
+    np.random.seed(42)
+    base_price = 1.0850
+    price_changes = np.random.normal(0, 0.0005, len(dates))
+    prices = base_price + np.cumsum(price_changes)
+    prices = np.clip(prices, 1.0800, 1.0900)  # Keep prices within a realistic range
+    data = []
+    for i, price in enumerate(prices):
+        high = price + abs(np.random.normal(0, 0.0003))
+        low = price - abs(np.random.normal(0, 0.0003))
+        open_price = prices[i-1] if i > 0 else price
+        
+        data.append({
+            'open': open_price,
+            'high': high,
+            'low': low,
+            'close': price
+        })
+    
+    df = pd.DataFrame(data, index=dates)
+    return df
